@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id       Int      @id @default(autoincrement())
+  nickname String
+  name     String
+  email    String   @unique
+  password String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  posts Post[]
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  authorId  Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  post_status Int
+  title     String
+  content   String
+  tags TagsOnPosts[]
+  categories CategoriesOnPosts[]
+  author User @relation(fields: [authorId], references: [id])
+}
+
+model Category {
+  id    Int                 @id @default(autoincrement())
+  name  String
+  summary String
+  posts CategoriesOnPosts[]
+  fatherId Int?
+  father   Category?   @relation("category_tree", fields: [fatherId], references: [id])
+  childs  Category[]  @relation("category_tree")
+}
+
+model CategoriesOnPosts {
+  post       Post     @relation(fields: [postId], references: [id])
+  postId     Int // 关系标量字段 (在上述 `@relation` 属性中使用)
+  category   Category @relation(fields: [categoryId], references: [id])
+  categoryId Int // 关系标量字段 (在上述 `@relation` 属性中使用)
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([postId, categoryId])
+}
+
+model Tag {
+  id    Int                 @id @default(autoincrement())
+  name  String
+  summary String
+  posts TagsOnPosts[]
+}
+
+model TagsOnPosts {
+  post       Post     @relation(fields: [postId], references: [id])
+  postId     Int // 关系标量字段 (在上述 `@relation` 属性中使用)
+  tag   Tag @relation(fields: [tagId], references: [id])
+  tagId Int // 关系标量字段 (在上述 `@relation` 属性中使用)
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([postId, tagId])
+}
